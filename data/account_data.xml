@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="payment_method_credomatic" model="pos.payment.method">
+            <field name="name">Credomátic</field>
+            <field name="use_payment_terminal">credomatic</field>
+        </record>
+        <record id="payment_method_credomatic_puntos" model="pos.payment.method">
+            <field name="name">Credomátic Puntos</field>
+            <field name="use_payment_terminal">credomatic</field>
+            <field name="pago_puntos">True</field>
+        </record>
+        <record id="payment_method_credomatic_manual" model="pos.payment.method">
+            <field name="name">Credomátic Manual</field>
+            <field name="pago_manual">True</field>
+        </record>
+    </data>
+</odoo>

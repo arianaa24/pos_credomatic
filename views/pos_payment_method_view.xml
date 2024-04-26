@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    
+    <record id="pos_credomatic_pos_payment_method_view_form" model="ir.ui.view">
+        <field name="name">pos_credomatic.pos.payment.method.form</field>
+        <field name="model">pos.payment.method</field>
+        <field name="inherit_id" ref="point_of_sale.pos_payment_method_view_form"/>
+        <field name="arch" type="xml">
+            <field name="split_transactions" position="before">
+                <field name="pago_puntos"/>
+                <field name="pago_manual"/>
+            </field>
+        </field>
+    </record>
+
+</odoo>
