@@ -2,7 +2,7 @@
 import { _t } from "@web/core/l10n/translation";
 import { PaymentInterface } from "@point_of_sale/app/payment/payment_interface";
 import { ErrorPopup } from "@point_of_sale/app/errors/popups/error_popup";
-import { roundPrecision as round_pr } from "@web/core/utils/numbers";
+import { floatIsZero } from "@web/core/utils/numbers";
 let timeoutID;
 
 export class PaymentCredomatic extends PaymentInterface {
@@ -24,7 +24,7 @@ export class PaymentCredomatic extends PaymentInterface {
     }
 
     startTimer(line) {
-        timeoutID = setTimeout(this.stopFunction(line), 3 * 60 * 1000); // Límite de tiempo: 3 minutes
+        timeoutID = setTimeout(this.stopFunction(line), 3 * 60 * 1000); // Límite de tiempo: 3 minutos
     }
     
     stopFunction(line) {
@@ -36,16 +36,18 @@ export class PaymentCredomatic extends PaymentInterface {
     normal_payment_request(order, line) {
         var payment_data = "terminalId:EMVCMO01;transactionType:SALE;invoice:"+order.uid+";totalAmount:"+line.amount;
         var response = this.SdkInvoke(payment_data);               
-        //var response = '{ "responseCode":"00", "authorizationNumber":"987654321"}'; /// INVENTADO
         var json_response = JSON.parse(response);
         return this.response_eval(json_response, line);
     }
 
     points_payment_request(order, line) {
-        if (line.amount == order.get_total_with_tax()){
+        let is_zero = floatIsZero(
+            order.get_total_with_tax() - line.amount,
+            this.pos.currency.decimal_places
+        )
+        if (is_zero == true){
             var payment_data = "terminalId:EMVCMO01;transactionType:POINTS;invoice:"+order.uid+";totalAmount:"+line.amount+";pointsPlan:00";
             var response = this.SdkInvoke(payment_data);
-            //var response = '{ "responseCode":"00", "authorizationNumber":"123456789"}'; /// INVENTADO
             var json_response = JSON.parse(response);
             return this.response_eval(json_response, line);
         }else{
@@ -60,11 +62,19 @@ export class PaymentCredomatic extends PaymentInterface {
 
     response_eval(response, line){
         console.log("response", response);
+        var response_code, response_description;
         if (response == false || (response['responseCode'] != '00' && response['responseCode'] != '08')){
             line.set_payment_status('retry');
+            if (response['responseCode']){
+                response_code = response['responseCode'];
+                response_description = response['responseCodeDescription'];
+            }else{
+                response_code = '';
+                response_description = 'Error de conexión.';
+            }
             this.env.services.popup.add(ErrorPopup, {
-                title: _t("No se pudo realizar el pago (%s)", response['responseCode']),
-                body: _t("%s", response['responseCodeDescription']),
+                title: _t("No se pudo realizar el pago %s", response_code),
+                body: _t("%s", response_description),
             });
             return Promise.resolve();
         }else{
