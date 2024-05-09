@@ -11,13 +11,13 @@ export class PaymentCredomatic extends PaymentInterface {
         super.send_payment_request(...arguments);
         var order = this.pos.get_order();
         var line = order.selected_paymentline;
-        console.log("order", order); 
+        console.info("order", order); 
 
         this.startTimer(line);
         line.set_payment_status('waitingCard');
         
         if (line.payment_method.pago_puntos == true){
-           return this.points_payment_request(order, line);
+            return this.points_payment_request(order, line);
         }else{
             return this.normal_payment_request(order, line);
         }
@@ -35,7 +35,7 @@ export class PaymentCredomatic extends PaymentInterface {
 
     normal_payment_request(order, line) {
         var payment_data = "terminalId:EMVCMO01;transactionType:SALE;invoice:"+order.uid+";totalAmount:"+line.amount;
-        var response = this.SdkInvoke(payment_data);               
+        var response = this.invoke("SdkInvoke", payment_data);    
         var json_response = JSON.parse(response);
         return this.response_eval(json_response, line);
     }
@@ -47,7 +47,7 @@ export class PaymentCredomatic extends PaymentInterface {
         )
         if (is_zero == true){
             var payment_data = "terminalId:EMVCMO01;transactionType:POINTS;invoice:"+order.uid+";totalAmount:"+line.amount+";pointsPlan:00";
-            var response = this.SdkInvoke(payment_data);
+            var response = this.invoke("SdkInvoke", payment_data);
             var json_response = JSON.parse(response);
             return this.response_eval(json_response, line);
         }else{
@@ -61,7 +61,7 @@ export class PaymentCredomatic extends PaymentInterface {
     }
 
     response_eval(response, line){
-        console.log("response", response);
+        console.info("response", response);
         var response_code, response_description;
         if (response == false || (response['responseCode'] != '00' && response['responseCode'] != '08')){
             line.set_payment_status('retry');
@@ -87,10 +87,6 @@ export class PaymentCredomatic extends PaymentInterface {
 
     //Métodos de integración
     
-     SdkInvoke(text) {
-        return this.invoke("SdkInvoke", text);
-    }
-    
     invoke(method, message) {
         var response = false;
         this.proxy_invoke(method, message, function(result) {
@@ -109,7 +105,7 @@ export class PaymentCredomatic extends PaymentInterface {
         $.ajax({
             url: serviceUrl + "/" + method,
             crossDomain: true,
-            data: this.stringify(message),
+            data: message,
             type: "POST",
             processData: false,
             contentType: "application/json",
@@ -131,27 +127,4 @@ export class PaymentCredomatic extends PaymentInterface {
         });
     }
     
-    stringify(json) {
-        // http://www.west-wind.com/weblog/posts/2009/Sep/15/Making-jQuery-calls-to-WCFASMX-with-a-ServiceProxy-Client
-        var reIso = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2}(?:\.\d*)?)Z$/;
-        /// <summary>
-        /// Wcf specific stringify that encodes dates in the
-        /// a WCF compatible format ("/Date(9991231231)/")
-        /// Note: this format works ONLY with WCF. 
-        ///       ASMX can use ISO dates as of .NET 3.5 SP1
-        /// </summary>
-        /// <param name="key" type="var">property name</param>
-        /// <param name="value" type="var">value of the property</param>         
-        return JSON.stringify(json, function(key, value) {
-            if (typeof value == "string") {
-                var a = reIso.exec(value);
-                if (a) {
-                    var val = '/Date(' + new Date(Date.UTC(+a[1], +a[2] - 1, +a[3], +a[4], +a[5], +a[6])).getTime() + ')/';
-                    this[key] = val;
-                    return val;
-                }
-            }
-            return value;
-        });
-    }
 }
