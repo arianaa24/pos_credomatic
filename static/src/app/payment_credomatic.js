@@ -11,15 +11,18 @@ export class PaymentCredomatic extends PaymentInterface {
         super.send_payment_request(...arguments);
         var order = this.pos.get_order();
         var line = order.selected_paymentline;
-        console.info("order", order); 
+        var payment_data = ""
+        console.info("order", order);
 
         this.startTimer(line);
         line.set_payment_status('waitingCard');
         
         if (line.payment_method.pago_puntos == true){
-            return this.points_payment_request(order, line);
+            payment_data = "terminalId:"+this.pos.config.terminal_id+";transactionType:POINTS;invoice:"+order.uid+";totalAmount:"+line.amount+";pointsPlan:00";
+            return this.verify_points_payment(payment_data, order, line);
         }else{
-            return this.normal_payment_request(order, line);
+            payment_data = "terminalId:"+this.pos.config.terminal_id+";transactionType:SALE;invoice:"+order.uid+";totalAmount:"+line.amount;
+            return this.payment_request(payment_data, line);
         }
     }
 
@@ -33,23 +36,20 @@ export class PaymentCredomatic extends PaymentInterface {
         return false;
     }
 
-    normal_payment_request(order, line) {
-        var payment_data = "terminalId:EMVCMO01;transactionType:SALE;invoice:"+order.uid+";totalAmount:"+line.amount;
-        var response = this.invoke("SdkInvoke", payment_data);    
+    payment_request(payment_data, line) {
+        var service = new ServiceProvider();
+        var response = service.SdkInvoke(payment_data); 
         var json_response = JSON.parse(response);
         return this.response_eval(json_response, line);
     }
 
-    points_payment_request(order, line) {
+    verify_points_payment(payment_data, order, line) {
         let is_zero = floatIsZero(
             order.get_total_with_tax() - line.amount,
             this.pos.currency.decimal_places
         )
         if (is_zero == true){
-            var payment_data = "terminalId:EMVCMO01;transactionType:POINTS;invoice:"+order.uid+";totalAmount:"+line.amount+";pointsPlan:00";
-            var response = this.invoke("SdkInvoke", payment_data);
-            var json_response = JSON.parse(response);
-            return this.response_eval(json_response, line);
+            return this.payment_request(payment_data, line);
         }else{
             line.set_payment_status('retry');
             this.env.services.popup.add(ErrorPopup, {
@@ -78,53 +78,13 @@ export class PaymentCredomatic extends PaymentInterface {
             });
             return Promise.resolve();
         }else{
+            if (response['voucher']){
+                line.voucher = response['voucher']
+            }
             line.numero_autorizacion = response['authorizationNumber'];
             line.set_payment_status('done');
             return Promise.resolve(true);
         }
-    }
-
-
-    //Métodos de integración
-    
-    invoke(method, message) {
-        var response = false;
-        this.proxy_invoke(method, message, function(result) {
-            response = result;
-        }, this.ProcessError);
-        return response;
-    }
-    
-    ProcessError(xhr) {
-        var reason = xhr.status + ": " + xhr.statusText;
-        alert("I've got an error: " + reason);
-    }
-    
-    proxy_invoke(method, message, onSuccess, onError) {
-        var serviceUrl = "http://localhost:0808/baccredomatic";
-        $.ajax({
-            url: serviceUrl + "/" + method,
-            crossDomain: true,
-            data: message,
-            type: "POST",
-            processData: false,
-            contentType: "application/json",
-            timeout: 10000,
-            async: false,
-            dataType: "text",  
-            success: function (result) {
-                var isVoid = result == "";
-                var response = isVoid ? true : JSON.parse(result);
-                if (onSuccess) {
-                    onSuccess(response);
-                }
-            },
-            error: function (xhr, status) {
-                if (onError) {
-                    onError(xhr, status);
-                }
-            },
-        });
     }
     
 }

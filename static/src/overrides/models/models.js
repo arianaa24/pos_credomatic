@@ -12,6 +12,7 @@ patch(Payment.prototype, {
     setup(obj, options) {
         super.setup(...arguments);
         this.numero_autorizacion = '';
+        this.voucher = '';
     },
 
     export_as_JSON(){
@@ -23,6 +24,7 @@ patch(Payment.prototype, {
     export_for_printing(){
         const json = super.export_for_printing(...arguments);
         json.numero_autorizacion = this.numero_autorizacion;
+        json.voucher = this.voucher;
         return json;
     },
 
