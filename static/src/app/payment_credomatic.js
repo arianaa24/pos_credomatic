@@ -39,7 +39,11 @@ export class PaymentCredomatic extends PaymentInterface {
     payment_request(payment_data, line) {
         var service = new ServiceProvider();
         var response = service.SdkInvoke(payment_data); 
-        var json_response = JSON.parse(response);
+
+        var string_to_parse = response.replace(/(\r\n|\r|\n)/g, '\\r\\n');
+        string_to_parse = string_to_parse.substring(0, string_to_parse.length - 4);
+
+        var json_response = JSON.parse(string_to_parse);
         return this.response_eval(json_response, line);
     }
 

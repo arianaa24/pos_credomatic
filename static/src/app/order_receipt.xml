@@ -7,7 +7,7 @@
                 <span t-esc="props.formatCurrency(line.amount, false)" class="pos-receipt-right-align"/>
                 <div t-if="line.numero_autorizacion">
                     Numero de Autorización: <span t-esc="line.numero_autorizacion"/>
-                    <br/><br/><span t-esc="line.voucher"/><br/>
+                    <br/><br/><pre><span t-esc="line.voucher"/></pre><br/>
                 </div>
             </div>
         </xpath>
