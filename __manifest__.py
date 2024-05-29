@@ -11,7 +11,6 @@
         'data/account_data.xml',
         'views/pos_payment_method_view.xml',
         'views/pos_order_view.xml',
-        'views/pos_config_view.xml',
         'views/res_config_settings_view.xml',
     ],
     'assets':{
