@@ -39,12 +39,21 @@ export class PaymentCredomatic extends PaymentInterface {
     payment_request(payment_data, line) {
         var service = new ServiceProvider();
         var response = service.SdkInvoke(payment_data); 
+        
+        try {
+            var string_to_parse = response.replace(/(\r\n|\r|\n)/g, '\\r\\n');
+            string_to_parse = string_to_parse.substring(0, string_to_parse.length - 4);
 
-        var string_to_parse = response.replace(/(\r\n|\r|\n)/g, '\\r\\n');
-        string_to_parse = string_to_parse.substring(0, string_to_parse.length - 4);
-
-        var json_response = JSON.parse(string_to_parse);
-        return this.response_eval(json_response, line);
+            var json_response = JSON.parse(string_to_parse);
+            return this.response_eval(json_response, line);
+        } 
+        catch(err){
+            this.env.services.popup.add(ErrorPopup, {
+                title: _t("No se pudo realizar el pago"),
+                body: _t("Respuesta del servicio: %s   --   Error: %s", response, err),
+            });
+            return Promise.resolve();
+        }
     }
 
     verify_points_payment(payment_data, order, line) {
@@ -77,7 +86,7 @@ export class PaymentCredomatic extends PaymentInterface {
                 response_description = 'Error de conexión.';
             }
             this.env.services.popup.add(ErrorPopup, {
-                title: _t("No se pudo realizar el pago %s", response_code),
+                title: _t("No se pudo realizar el pago: %s", response_code),
                 body: _t("%s", response_description),
             });
             return Promise.resolve();
