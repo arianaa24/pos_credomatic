@@ -42,12 +42,16 @@ export class PaymentCredomatic extends PaymentInterface {
         
         try {
             var string_to_parse = response.replace(/(\r\n|\r|\n)/g, '\\r\\n');
+            console.log(string_to_parse)
             string_to_parse = string_to_parse.substring(0, string_to_parse.length - 4);
+            console.log(string_to_parse)
 
             var json_response = JSON.parse(string_to_parse);
+            console.info("response", json_response);
             return this.response_eval(json_response, line);
         } 
         catch(err){
+            console.info("response with error", response);
             this.env.services.popup.add(ErrorPopup, {
                 title: _t("No se pudo realizar el pago"),
                 body: _t("Respuesta del servicio: %s   --   Error: %s", response, err),
@@ -74,7 +78,6 @@ export class PaymentCredomatic extends PaymentInterface {
     }
 
     response_eval(response, line){
-        console.info("response", response);
         var response_code, response_description;
         if (response == false || (response['responseCode'] != '00' && response['responseCode'] != '08')){
             line.set_payment_status('retry');
