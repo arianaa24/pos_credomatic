@@ -18,7 +18,8 @@ export class PaymentCredomatic extends PaymentInterface {
         line.set_payment_status('waitingCard');
         
         if (line.payment_method.pago_puntos == true){
-            payment_data = "terminalId:"+this.pos.config.terminal_id+";transactionType:POINTS;invoice:"+order.uid+";totalAmount:"+line.amount+";pointsPlan:00";
+            var points_amount = Math.ceil(line.amount * 15);
+            payment_data = "terminalId:"+this.pos.config.terminal_puntos_id+";transactionType:POINTS;invoice:"+order.uid+";totalAmount:"+points_amount+";pointsPlan:00";
             return this.verify_points_payment(payment_data, order, line);
         }else{
             payment_data = "terminalId:"+this.pos.config.terminal_id+";transactionType:SALE;invoice:"+order.uid+";totalAmount:"+line.amount;
@@ -27,7 +28,7 @@ export class PaymentCredomatic extends PaymentInterface {
     }
 
     startTimer(line) {
-        timeoutID = setTimeout(this.stopFunction(line), 3 * 60 * 1000); // Límite de tiempo: 3 minutos
+        timeoutID = setTimeout(this.stopFunction(line), 60 * 1000); // Límite de tiempo: 1 minuto
     }
     
     stopFunction(line) {
@@ -39,7 +40,7 @@ export class PaymentCredomatic extends PaymentInterface {
     payment_request(payment_data, line) {
         var service = new ServiceProvider();
         var response = service.SdkInvoke(payment_data); 
-        
+
         try {
             var string_to_parse = response.replace(/(\r\n|\r|\n)/g, '\\r\\n');
             console.log(string_to_parse)
@@ -51,30 +52,41 @@ export class PaymentCredomatic extends PaymentInterface {
             return this.response_eval(json_response, line);
         } 
         catch(err){
-            console.info("response with error", response);
+            console.info("response with error", err);
             this.env.services.popup.add(ErrorPopup, {
                 title: _t("No se pudo realizar el pago"),
-                body: _t("Respuesta del servicio: %s   --   Error: %s", response, err),
+                body: _t("Respuesta del servicio: %s", response),
             });
             return Promise.resolve();
         }
     }
 
     verify_points_payment(payment_data, order, line) {
-        let is_zero = floatIsZero(
-            order.get_total_with_tax() - line.amount,
-            this.pos.currency.decimal_places
-        )
-        if (is_zero == true){
-            return this.payment_request(payment_data, line);
-        }else{
+        if (order.get_total_with_tax() < this.pos.config.cantidad_minima_puntos){
             line.set_payment_status('retry');
             this.env.services.popup.add(ErrorPopup, {
                 title: _t("No se puede realizar el pago"),
-                body: _t("Para redimir los puntos debe pagar el monto total."),
+                body: _t("El monto mínimo para redimir puntos es %s.", this.pos.config.cantidad_minima_puntos),
             });
-		    return Promise.resolve();
+            return Promise.resolve();
+        }else{
+            let is_zero = floatIsZero(
+                order.get_total_with_tax() - line.amount,
+                this.pos.currency.decimal_places
+            )
+            if (is_zero == true){
+                return this.payment_request(payment_data, line);
+            }else{
+                line.set_payment_status('retry');
+                this.env.services.popup.add(ErrorPopup, {
+                    title: _t("No se puede realizar el pago"),
+                    body: _t("Para redimir los puntos debe pagar el monto total."),
+                });
+                return Promise.resolve();
+            }
         }
+
+        
     }
 
     response_eval(response, line){
