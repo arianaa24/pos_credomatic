@@ -8,8 +8,20 @@
             <xpath expr="//block[@id='pos_payment_terminals_section']" position="inside">
                 <setting string="Credomátic" help="Terminal del Pinpad">
                     <div>
-                        <label string="Terminal ID" for="terminal_id" class="col-lg-3 o_light_label"/>
+                        <label string="Terminal ID (Automático)" for="terminal_id" class="col-lg-3 o_light_label"/>
                         <field name="terminal_id"/>
+                    </div>
+                    <div>
+                        <label string="Terminal ID (Puntos)" for="terminal_puntos_id" class="col-lg-3 o_light_label"/>
+                        <field name="terminal_puntos_id"/>
+                    </div>
+                    <div>
+                        <label string="Cantidad de puntos por quetzal" for="equivalencia_puntos" class="col-lg-3 o_light_label"/>
+                        <field name="equivalencia_puntos"/>
+                    </div>
+                    <div>
+                        <label string="Venta mínima para canje de puntos" for="cantidad_minima_puntos" class="col-lg-3 o_light_label"/>
+                        <field name="cantidad_minima_puntos"/>
                     </div>
                 </setting>
             </xpath>
