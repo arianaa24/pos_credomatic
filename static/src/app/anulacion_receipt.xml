@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+    <t t-name="pos_credomatic.AnulacionReceipt">
+        <div class="pos-receipt">
+            <ReceiptHeader data="props.data.headerData" />
+
+            <div t-foreach="props.data.paymentlines" t-as="line" t-key="line_index">
+                <div t-if="line.anulacion_voucher">
+                    <br/><br/><pre style="font-size:81%;"><t t-esc="line.anulacion_voucher"/></pre><br/>
+                </div>
+            </div>
+
+            <!-- Footer -->
+           <div t-if="props.data.footer"  class="pos-receipt-center-align" style="white-space:pre-line">
+               <br/>
+               <t t-esc="props.data.footer" />
+                <br/>
+                <br/>
+            </div>
+
+            <br/>
+            <div class="pos-receipt-order-data">
+                <p>Powered by Odoo</p>
+                <div t-esc="props.data.name" />
+                <div id="order-date" t-esc="props.data.date" />
+            </div>
+        </div>
+    </t>
+</templates>

@@ -5,6 +5,15 @@ class PosPayment(models.Model):
     _inherit = "pos.payment"
 
     numero_autorizacion = fields.Char('Número de autorización')
+    reference_number = fields.Char('Número de referencia')
+    system_trace_num = fields.Char('System trace number')
+    numero_autorizacion_anulacion = fields.Char('Número de autorización de anulación')
+
+    def _export_for_ui(self, payment):
+        res = super(PosPayment, self)._export_for_ui(payment)
+        res.update({'numero_autorizacion': payment.numero_autorizacion, 'reference_number': payment.reference_number, 'system_trace_num': payment.system_trace_num, 'numero_autorizacion_anulacion': payment.numero_autorizacion_anulacion,})
+        return res
+
 
 class PosPaymentMethod(models.Model):
     _inherit = 'pos.payment.method'

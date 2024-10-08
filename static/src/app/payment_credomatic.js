@@ -16,13 +16,14 @@ export class PaymentCredomatic extends PaymentInterface {
 
         this.startTimer(line);
         line.set_payment_status('waitingCard');
-        
+
+        var order_number = order.uid.replaceAll("-", "")
         if (line.payment_method.pago_puntos == true){
             var points_amount = Math.ceil(line.amount * 15);
-            payment_data = "terminalId:"+this.pos.config.terminal_puntos_id+";transactionType:POINTS;invoice:"+order.uid+";totalAmount:"+points_amount+";pointsPlan:00";
+            payment_data = "terminalId:"+this.pos.config.terminal_puntos_id+";transactionType:POINTS;invoice:"+order_number+";totalAmount:"+points_amount+";pointsPlan:00";
             return this.verify_points_payment(payment_data, order, line);
         }else{
-            payment_data = "terminalId:"+this.pos.config.terminal_id+";transactionType:SALE;invoice:"+order.uid+";totalAmount:"+line.amount;
+            payment_data = "terminalId:"+this.pos.config.terminal_id+";transactionType:SALE;invoice:"+order_number+";totalAmount:"+line.amount;
             return this.payment_request(payment_data, line);
         }
     }
@@ -110,6 +111,8 @@ export class PaymentCredomatic extends PaymentInterface {
                 line.voucher = response['voucher']
             }
             line.numero_autorizacion = response['authorizationNumber'];
+            line.reference_number = response['referenceNumber'];
+            line.system_trace_num = response['systemTraceNumber'];
             line.set_payment_status('done');
             return Promise.resolve(true);
         }
