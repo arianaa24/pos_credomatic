@@ -86,7 +86,7 @@ patch(TicketScreen.prototype, {
             return;
 
         }else{
-            puntos = ''
+            var puntos = ''
             if(line.name == "Credomátic Puntos"){
                 puntos = 'PUNTOS'
             }
