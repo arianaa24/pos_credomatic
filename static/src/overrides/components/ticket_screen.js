@@ -41,6 +41,10 @@ patch(TicketScreen.prototype, {
         if (!confirmed || !payment_line) {
             return;
         } else {
+            var terminal = order.pos.config.terminal_id;
+            if(payment_line.name == "Credomátic Puntos"){
+                terminal = order.pos.config.terminal_puntos_id;
+            }
             var service = new ServiceProvider();
             console.info(payment_line)
 
