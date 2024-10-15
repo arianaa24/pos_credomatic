@@ -41,15 +41,15 @@ patch(TicketScreen.prototype, {
         if (!confirmed || !payment_line) {
             return;
         } else {
-            var terminal = order.pos.config.terminal_id;
-            if(payment_line.name == "Credomátic Puntos"){
-                terminal = order.pos.config.terminal_puntos_id;
-            }
+            const foundPaymentId = await this.orm.search("pos.payment", [
+                ["numero_autorizacion", "=", payment_line.numero_autorizacion],
+            ]);
+            var terminal = (payment_line.name == "Credomátic Puntos") ? order.pos.config.terminal_puntos_id : order.pos.config.terminal_id;
             var service = new ServiceProvider();
             console.info(payment_line)
 
             // ANULACION
-            var payment_data = "terminalId:"+order.pos.config.terminal_id+";transactionType:VOID;authorizationNum:"+payment_line.numero_autorizacion+";referenceNumber:"+payment_line.reference_number+";systemTraceNum:"+payment_line.system_trace_num;
+            var payment_data = "terminalId:"+terminal+";transactionType:VOID;authorizationNum:"+payment_line.numero_autorizacion+";referenceNumber:"+payment_line.reference_number+";systemTraceNum:"+payment_line.system_trace_num;
             console.info(payment_data)
             var response = service.SdkInvoke(payment_data);
             
@@ -57,10 +57,9 @@ patch(TicketScreen.prototype, {
                 console.log('response', response)
                 var string_to_parse = response.replace(/(\r\n|\r|\n)/g, '\\r\\n');
                 string_to_parse = string_to_parse.substring(0, string_to_parse.length - 4);
-                console.log(string_to_parse)
                 var json_response = JSON.parse(string_to_parse);
                 console.info("json_response", json_response);
-                return this.response_eval(json_response, payment_line, order);
+                return this.response_eval(json_response, payment_line, order, foundPaymentId);
             } 
             catch(err){
                 console.info("response with error", err);
@@ -73,7 +72,7 @@ patch(TicketScreen.prototype, {
         }
     },
 
-    async response_eval(response, line, order){
+    async response_eval(response, line, order, foundPaymentId){
         var response_code, response_description;
         if (response == false || (response['responseCode'] != '00' && response['responseCode'] != '08')){
             if (response['responseCode']){
@@ -90,14 +89,13 @@ patch(TicketScreen.prototype, {
             return;
 
         }else{
-            var puntos = ''
-            if(line.name == "Credomátic Puntos"){
-                puntos = 'PUNTOS'
-            }
-            var voucher_anulacion = "              "+response['TerminalDisplayLine1Voucher']+"               \n         "+response['TerminalDisplayLine2Voucher']+"        \n                "+response['TerminalDisplayLine3Voucher']+"                 \nTerminald ID:                   "+order.pos.config.terminal_id+"\n          ***  ANULACION "+puntos+" ***           \n"+response['cardBrand']+"              "+response['maskedCardNumber']+"\nAUTH: "+response['authorizationNumber']+"                            \nREF:                            "+response['referenceNumber']+"\n					  \nFECHA: "+response['hostDate']+"              "+response['hostTime']+"\n					  \nTOTAL:                "+response['cardBrand']+". -"+response['salesAmount']+"\n					  \n					  \n           ****** FIN  ******           \n					  \n- - - - - - - - - - - - - - - - - - - -\n        ***  COPIA CLIENTE  ***         \n					  \n              "+response['TerminalDisplayLine1Voucher']+"               \n       "+ response['TerminalDisplayLine2Voucher']+"        \n                "+response['TerminalDisplayLine3Voucher']+"                 \nTerminald ID:                   "+order.pos.config.terminal_id+"\n          ***  ANULACION "+puntos+" ***           \n"+response['cardBrand']+"              "+response['maskedCardNumber']+"\nAUTH: "+response['authorizationNumber']+"                            \nREF:                            "+response['referenceNumber']+"\n					  \nFECHA: "+response['hostDate']+"              "+response['hostTime']+"\n					\nTOTAL:                "+response['cardBrand']+". -"+response['salesAmount']+"\n					  \n           ****** FIN  ******           \n"
+            var puntos = (line.name == "Credomátic Puntos") ? 'PUNTOS': '';
+            var voucher_anulacion = "              "+response['TerminalDisplayLine1Voucher']+"               \n         "+response['TerminalDisplayLine2Voucher']+"        \n                "+response['TerminalDisplayLine3Voucher']+"                 \nTerminald ID:                 "+order.pos.config.terminal_id+"\n        ***  ANULACION "+puntos+" ***           \n"+response['cardBrand']+"            "+response['maskedCardNumber']+"\nAUTH:                        "+response['authorizationNumber']+"\nREF:                          "+response['referenceNumber']+"\n					  \nFECHA: "+response['hostDate'].substring(2, 4)+"/"+response['hostDate'].substring(0, 2)+"/"+response['hostDate'].substring(4, 8)+"                "+response['hostTime'].substring(0, 2)+":"+response['hostTime'].substring(2, 4)+"\n					  \nTOTAL:                    "+response['currencyVoucher']+". -"+line.amount+"\n					  \n           ****** FIN ******           \n					  \n- - - - - - - - - - - - - - - - - - - -\n        ***  COPIA CLIENTE  ***         \n					  \n              "+response['TerminalDisplayLine1Voucher']+"               \n       "+ response['TerminalDisplayLine2Voucher']+"        \n                "+response['TerminalDisplayLine3Voucher']+"                 \nTerminald ID:                 "+order.pos.config.terminal_id+"\n        ***  ANULACION "+puntos+" ***           \n"+response['cardBrand']+"            "+response['maskedCardNumber']+"\nAUTH:                        "+response['authorizationNumber']+"\nREF:                          "+response['referenceNumber']+"\n					  \nFECHA: "+response['hostDate'].substring(2, 4)+"/"+response['hostDate'].substring(0, 2)+"/"+response['hostDate'].substring(4, 8)+"                "+response['hostTime'].substring(0, 2)+":"+response['hostTime'].substring(2, 4)+"\n					\nTOTAL:                    "+response['currencyVoucher']+". -"+line.amount+"\n					  \n           ****** FIN ******           \n"
             line.anulacion_voucher = voucher_anulacion;
             line.numero_autorizacion_anulacion = response['authorizationNumber'];
             line.set_payment_status('reversed');
+
+            await this.orm.write("pos.payment", [foundPaymentId[0]], { numero_autorizacion_anulacion: response['authorizationNumber'], payment_status: 'reversed' });
             await this.printer.print(
                 AnulacionReceipt,
                 {

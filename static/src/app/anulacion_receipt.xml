@@ -6,7 +6,7 @@
 
             <div t-foreach="props.data.paymentlines" t-as="line" t-key="line_index">
                 <div t-if="line.anulacion_voucher">
-                    <br/><br/><pre style="font-size:90%;"><t t-esc="line.anulacion_voucher"/></pre><br/>
+                    <br/><br/><pre style="font-size:83%;"><t t-esc="line.anulacion_voucher"/></pre><br/>
                 </div>
             </div>
 
