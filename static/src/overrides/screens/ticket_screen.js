@@ -103,6 +103,10 @@ patch(TicketScreen.prototype, {
                 },
                 { webPrintFallback: true }
             );
+            await this.env.services.popup.add(ErrorPopup, {
+                title: _t("Transacción anulada"),
+                body: _t("Transacción anulada exitosamente."),
+            });
             return true;
         }
     }
