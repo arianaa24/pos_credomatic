@@ -41,7 +41,7 @@ export class PaymentCredomatic extends PaymentInterface {
     payment_request(payment_data, line) {
         var service = new ServiceProvider();
         var response = service.SdkInvoke(payment_data); 
-
+        
         try {
             var string_to_parse = response.replace(/(\r\n|\r|\n)/g, '\\r\\n');
             console.log(string_to_parse)
