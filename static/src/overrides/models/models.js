@@ -17,6 +17,7 @@ patch(Payment.prototype, {
         this.system_trace_num = '';
         this.anulacion_voucher = '';
         this.numero_autorizacion_anulacion = '';
+        this.lote = '';
     },
 
     init_from_JSON(json) {
@@ -25,6 +26,7 @@ patch(Payment.prototype, {
         this.reference_number = json.reference_number;
         this.system_trace_num = json.system_trace_num;
         this.numero_autorizacion_anulacion = json.numero_autorizacion_anulacion;
+        this.lote = json.lote;
     },
 
     export_as_JSON(){
@@ -33,6 +35,7 @@ patch(Payment.prototype, {
         json.reference_number = this.reference_number;
         json.system_trace_num = this.system_trace_num;
         json.numero_autorizacion_anulacion = this.numero_autorizacion_anulacion;
+        json.lote = this.lote;
         return json;
     },
 

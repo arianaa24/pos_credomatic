@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+    <t t-name="pos_credomatic.CierreCajaReceipt">
+        <div class="pos-receipt">
+            <div t-if="props.data">
+                <br/><br/><pre style="font-size:80%;"><t t-esc="props.data"/></pre><br/>
+            </div> 
+        </div>
+    </t>
+</templates>

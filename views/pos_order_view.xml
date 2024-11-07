@@ -8,6 +8,7 @@
             <field name="payment_method_id" position="after">
                 <field name="numero_autorizacion"/>
                 <field name="numero_autorizacion_anulacion"/>
+                <field name="lote"/>
             </field>
         </field>
     </record>

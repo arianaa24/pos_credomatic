@@ -8,10 +8,11 @@ class PosPayment(models.Model):
     reference_number = fields.Char('Número de referencia')
     system_trace_num = fields.Char('System trace number')
     numero_autorizacion_anulacion = fields.Char('Número de autorización de anulación')
+    lote = fields.Char('Número de lote')
 
     def _export_for_ui(self, payment):
         res = super(PosPayment, self)._export_for_ui(payment)
-        res.update({'numero_autorizacion': payment.numero_autorizacion, 'reference_number': payment.reference_number, 'system_trace_num': payment.system_trace_num, 'numero_autorizacion_anulacion': payment.numero_autorizacion_anulacion,})
+        res.update({'numero_autorizacion': payment.numero_autorizacion, 'reference_number': payment.reference_number, 'system_trace_num': payment.system_trace_num, 'numero_autorizacion_anulacion': payment.numero_autorizacion_anulacion, 'lote':payment.lote})
         return res
 
 
