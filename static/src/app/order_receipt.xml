@@ -14,7 +14,7 @@
         <xpath expr="//div[hasclass('pos-receipt')]" position="inside">
             <div class="paymentlines" t-foreach="props.data.paymentlines" t-as="line" t-key="line_index">
                 <div t-if="line.voucher">
-                    <br/><br/><pre style="font-size:81%;"><t t-esc="line.voucher"/></pre><br/>
+                    <br/><br/><pre style="font-size:85%;"><t t-esc="line.voucher"/></pre><br/>
                 </div>
             </div>
         </xpath>

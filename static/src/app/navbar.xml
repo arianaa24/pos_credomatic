@@ -3,16 +3,6 @@
 
     <t t-name="pos_credomatic.Navbar" t-inherit="point_of_sale.Navbar" t-inherit-mode="extension">
         <xpath expr="//div[hasclass('status-buttons')]" position="before">
-            <div class="button btn btn-light btn-secondary" t-on-click="cierreAutomatico">
-                <i class="fa fa-archive me-1" />
-                <span> </span>
-                <span>Cierre Pagos Automáticos</span>
-            </div>
-            <div class="button btn btn-light btn-secondary" t-on-click="cierrePuntos">
-                <i class="fa fa-archive me-1" />
-                <span> </span>
-                <span>Cierre Canje de Puntos</span>
-            </div>
             <div class="button btn btn-light btn-secondary" t-on-click="reporteAutomatico">
                 <i class="fa fa-archive me-1" />
                 <span> </span>
@@ -22,6 +12,16 @@
                 <i class="fa fa-archive me-1" />
                 <span> </span>
                 <span>Reporte Canje de Puntos</span>
+            </div>
+            <div class="button btn btn-light btn-secondary" t-on-click="cierreAutomatico">
+                <i class="fa fa-archive me-1" />
+                <span> </span>
+                <span>Cierre Pagos Automáticos</span>
+            </div>
+            <div class="button btn btn-light btn-secondary" t-on-click="cierrePuntos">
+                <i class="fa fa-archive me-1" />
+                <span> </span>
+                <span>Cierre Canje de Puntos</span>
             </div>
         </xpath>
     </t>

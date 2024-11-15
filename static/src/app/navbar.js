@@ -36,7 +36,7 @@ patch(Navbar.prototype, {
         } 
         catch(err){
             console.info("response with error", err);
-            this.popup.add.add(ErrorPopup, {
+            this.popup.add(ErrorPopup, {
                 title: _t("No se pudo realizar el cierre"),
                 body: _t("Respuesta del servicio: %s", response),
             });
@@ -54,7 +54,7 @@ patch(Navbar.prototype, {
                 response_code = '';
                 response_description = 'Error de conexión.';
             }
-            this.popup.add.add(ErrorPopup, {
+            this.popup.add(ErrorPopup, {
                 title: _t("No se pudo realizar la consulta para el reporte: %s", response_code),
                 body: _t("%s", response_description),
             });
@@ -145,7 +145,7 @@ patch(Navbar.prototype, {
                 } 
                 catch(err){
                     console.info("response with error", err);
-                    this.popup.add.add(ErrorPopup, {
+                    this.popup.add(ErrorPopup, {
                         title: _t("No se pudo realizar el cierre"),
                         body: _t("Respuesta del servicio: %s", response),
                     });
@@ -185,7 +185,7 @@ patch(Navbar.prototype, {
                 response_code = '';
                 response_description = 'Error de conexión.';
             }
-            this.popup.add.add(ErrorPopup, {
+            this.popup.add(ErrorPopup, {
                 title: _t("No se pudo realizar la consulta para el reporte: %s", response_code),
                 body: _t("%s", response_description),
             });
