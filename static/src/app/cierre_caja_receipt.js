@@ -10,7 +10,7 @@ export class CierreCajaReceipt extends Component {
         ReceiptHeader,
     };
     static props = {
-        data: Objectgit a,
+        data: Object,
         formatCurrency: Function,
     };
     omit(...args) {
