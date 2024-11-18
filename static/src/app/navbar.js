@@ -43,7 +43,6 @@ patch(Navbar.prototype, {
             return;
         }
     },
-
     async response_settlement_eval(response, terminal, name){
         var response_code, response_description;
         if (response == false || (response['responseCode'] != '00' && response['responseCode'] != '08')){
@@ -55,14 +54,14 @@ patch(Navbar.prototype, {
                 response_description = 'Error de conexión.';
             }
             this.popup.add(ErrorPopup, {
-                title: _t("No se pudo realizar la consulta para el reporte: %s", response_code),
+                title: _t("No se pudo realizar el cierre: %s", response_code),
                 body: _t("%s", response_description),
             });
             return;
         }else{
             const paymentIds = await this.pos.orm.search('pos.payment', [
                 ["payment_method_id.name", "=", name],
-                ['lote', '=', false]
+                ['lote', '=', '']
             ]);
             for (var payment_id of paymentIds){
                 await this.pos.orm.write('pos.payment', [payment_id], { lote: response['authorizationNumber'] });
@@ -75,9 +74,9 @@ patch(Navbar.prototype, {
                         session_id: this.pos.pos_session.id, 
                         hostDate: response['hostDate'],
                         hostTime: response['hostTime'],
-                        refundsAmount: parseFloat(response['refundsAmount']),
+                        refundsAmount: (terminal == this.pos.config.terminal_id) ? (parseFloat(response['refundsAmount']) / 100).toFixed(2): (parseFloat(response['refundsAmount']/this.pos.config.equivalencia_puntos)),
                         refundsTransactions: parseInt(response['refundsTransactions']),
-                        salesAmount: parseFloat(response['salesAmount']),
+                        salesAmount: (terminal == this.pos.config.terminal_id) ? (parseFloat(response['salesAmount']) / 100).toFixed(2): (parseFloat(response['salesAmount']/this.pos.config.equivalencia_puntos)),
                         salesTransactions: parseInt(response['salesTransactions']),
                         TerminalDisplayLine1Voucher: response['TerminalDisplayLine1Voucher'],
                         TerminalDisplayLine2Voucher: response['TerminalDisplayLine2Voucher'],
@@ -133,24 +132,22 @@ patch(Navbar.prototype, {
             return;
         } else {
             if (lote == "Sin Lote"){
-                var service = new ServiceProvider();
-                var data = "terminalId:"+terminal+";transactionType:BATCH_INQUIRY";
-                var response = service.SdkInvoke(data);
-                try {
-                    var string_to_parse = response.replace(/(\r\n|\r|\n)/g, '\\r\\n');
-                    string_to_parse = string_to_parse.substring(0, string_to_parse.length - 4);
-                    var json_response= JSON.parse(string_to_parse);
-                    console.info("json_response", json_response);
-                    return this.response_inquiry_eval(json_response, terminal, lote, paymentlines);
-                } 
-                catch(err){
-                    console.info("response with error", err);
-                    this.popup.add(ErrorPopup, {
-                        title: _t("No se pudo realizar el cierre"),
-                        body: _t("Respuesta del servicio: %s", response),
-                    });
-                    return;
+                var pagos_sin_lote = paymentlines.filter((item) => (item.lote == false && item.amount > 0));
+                var devoluciones_sin_lote = paymentlines.filter((item) => (item.lote == false && item.amount < 0));
+
+                var response = {
+                    hostDate: new Date().toString(),
+                    hostTime: new Date().toLocaleTimeString().toString(),
+                    refundsAmount: devoluciones_sin_lote.reduce((sum, pago) => sum + pago.amount, 0),
+                    refundsTransactions: devoluciones_sin_lote.length,
+                    salesAmount: pagos_sin_lote.reduce((sum, pago) => sum + pago.amount, 0),
+                    salesTransactions: pagos_sin_lote.length,
+                    currencyVoucher:"GTQ",
+                    TerminalDisplayLine1Voucher: '',
+                    TerminalDisplayLine2Voucher: '',
+                    TerminalDisplayLine3Voucher: '',
                 }
+                return this.impresion_reporte(response, terminal, lote, paymentlines);
             }else{
                 var sessionFields = ['lote', 'hostDate', 'hostTime', 'refundsAmount', 'refundsTransactions','salesAmount', 'salesTransactions', 'TerminalDisplayLine1Voucher', 'TerminalDisplayLine2Voucher', 'TerminalDisplayLine3Voucher'];
                 let sesion_id = await this.pos.orm.searchRead(
@@ -175,27 +172,6 @@ patch(Navbar.prototype, {
 
         }
     },
-    async response_inquiry_eval(response, terminal, lote, paymentlines){
-        var response_code, response_description;
-        if (response == false || (response['responseCode'] != '00' && response['responseCode'] != '08')){
-            if (response['responseCode']){
-                response_code = response['responseCode'];
-                response_description = response['responseCodeDescription'];
-            }else{
-                response_code = '';
-                response_description = 'Error de conexión.';
-            }
-            this.popup.add(ErrorPopup, {
-                title: _t("No se pudo realizar la consulta para el reporte: %s", response_code),
-                body: _t("%s", response_description),
-            });
-            return;
-
-        }else{
-            return this.impresion_reporte(response, terminal, lote, paymentlines);
-        }
-    },
-
     async impresion_reporte(response, terminal, lote, paymentlines){
         var lineas_filtradas = [];
         var lineas_detalle = "";

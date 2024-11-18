@@ -48,7 +48,7 @@ patch(PaymentScreen.prototype, {
         }else{
             this.env.services.popup.add(ErrorPopup, {
                 title: _t("Puntos acumulados para %s", response['cardHolderName']),
-                body: _t("Puntos acumulados: %s", response['salesAmount']),
+                body: _t("Puntos acumulados: %s, equivalente a Q.%s", parseInt(response['salesAmount']), parseInt((response['salesAmount'] / this.pos.config.equivalencia_puntos))),
             });
             return true;
         }

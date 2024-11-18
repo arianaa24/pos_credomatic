@@ -3,7 +3,7 @@
     <t t-name="pos_credomatic.CierreCajaReceipt">
         <div class="pos-receipt">
             <div t-if="props.data">
-                <br/><br/><pre style="font-size:80%;"><t t-esc="props.data"/></pre><br/>
+                <br/><br/><pre style="font-size:90%;"><t t-esc="props.data"/></pre><br/>
             </div> 
         </div>
     </t>
