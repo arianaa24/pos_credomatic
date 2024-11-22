@@ -59,10 +59,13 @@ patch(Navbar.prototype, {
             });
             return;
         }else{
-            const paymentIds = await this.pos.orm.search('pos.payment', [
-                ["payment_method_id.name", "=", name],
-                ['lote', '=', '']
-            ]);
+            var domain = ['|', ['lote', '=', undefined], ['lote', '=', ''], ["payment_method_id.use_payment_terminal", "=", "credomatic"],]
+            if (name == 'Credomátic Automático'){
+                domain.push(["payment_method_id.pago_puntos", "=", false])
+            }else{
+                domain.push(["payment_method_id.pago_puntos", "=", true])
+            }
+            const paymentIds = await this.pos.orm.search('pos.payment', domain);
             for (var payment_id of paymentIds){
                 await this.pos.orm.write('pos.payment', [payment_id], { lote: response['authorizationNumber'] });
             }
@@ -106,10 +109,11 @@ patch(Navbar.prototype, {
         return this.reporteCaja(name, terminal)
     },
     async reporteCaja(name, terminal) {
+        var domain = (name == 'Credomátic Automático') ? [["payment_method_id.use_payment_terminal", "=", "credomatic"], ["payment_method_id.pago_puntos", "=", false]]: [["payment_method_id.use_payment_terminal", "=", "credomatic"], ["payment_method_id.pago_puntos", "=", true]];
         var paymentFields = ["lote", "pos_order_id", "transaction_id", "reference_number", "numero_autorizacion", "amount", "payment_date", "numero_autorizacion_anulacion"];
         let paymentlines = await this.pos.orm.searchRead(
             "pos.payment",
-            [["payment_method_id.name", "=", name]],
+            domain,
             paymentFields
         );
         var listaLotesSinDuplicados = [...new Set(paymentlines.filter((item) => (item.lote)).map(item => item.lote))];
@@ -155,11 +159,12 @@ patch(Navbar.prototype, {
                     [["lote", "=", lote]],
                     sessionFields
                 );
+                var devoluciones_sin_lote = paymentlines.filter((item) => (item.lote == lote && item.amount < 0));
                 var response = {
                     hostDate: sesion_id[0].hostDate,
                     hostTime: sesion_id[0].hostTime,
-                    refundsAmount: sesion_id[0].refundsAmount,
-                    refundsTransactions: sesion_id[0].refundsTransactions,
+                    refundsAmount: devoluciones_sin_lote.reduce((sum, pago) => sum + pago.amount, 0),
+                    refundsTransactions: devoluciones_sin_lote.length,
                     salesAmount: sesion_id[0].salesAmount,
                     salesTransactions: sesion_id[0].salesTransactions,
                     currencyVoucher:"GTQ",
