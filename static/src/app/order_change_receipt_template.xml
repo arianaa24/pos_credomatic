@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+    <t t-name="pos_credomatic.OrderChangeReceipt" t-inherit="point_of_sale.OrderChangeReceipt" t-inherit-mode="extension">
+        
+        <xpath expr="//div[hasclass('pos-receipt-order-data')]" position="attributes">
+            <attribute name="style">font-size: 150%;</attribute>
+        </xpath>
+        <xpath expr="//div[hasclass('pos-receipt-order-data')]" position="inside">
+            <br/><b><t t-esc="changes.trackingNumber"/></b>
+            <br/><p style='font-size: 80%;'>Tipo de pedido</p>
+        </xpath>
+
+        <xpath expr="//div[hasclass('pos-receipt')]/t[3]/div[hasclass('pos-receipt-title')]/t" position="before">
+            <t t-esc='changes.time.date'/> - 
+        </xpath>
+        <xpath expr="//div[hasclass('pos-receipt')]/t[3]/t/div[hasclass('multiprint-flex')]" position="replace">
+            <div style="display: flex;margin-bottom: 3px;">
+                <span style="margin-right: 50px;" class="product-quantity" t-esc="change.quantity"/>
+                <span class="product-name" t-esc="change.name"/>
+            </div>
+        </xpath>
+
+    </t>
+</templates>
