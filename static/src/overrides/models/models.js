@@ -64,7 +64,7 @@ patch(Order.prototype, {
     },
 
     async printChanges(cancelled) {
-        console.info('entra a formato comanda')
+        console.info('entra a formato comanda', this)
         const orderChange = this.changesToOrder(cancelled);
         let isPrintSuccessful = true;
         const d = new Date();
