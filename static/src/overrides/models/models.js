@@ -63,49 +63,4 @@ patch(Order.prototype, {
         }
     },
 
-    async printChanges(cancelled) {
-        console.info('entra a formato comanda', this)
-        const orderChange = this.changesToOrder(cancelled);
-        let isPrintSuccessful = true;
-        const d = new Date();
-        let hours = "" + d.getHours();
-        hours = hours.length < 2 ? "0" + hours : hours;
-        let minutes = "" + d.getMinutes();
-        minutes = minutes.length < 2 ? "0" + minutes : minutes;
-        let date = d.getDate() + "/" + (d.getMonth()+1) + "/" + d.getFullYear();
-        for (const printer of this.pos.unwatched.printers) {
-            const changes = this._getPrintingCategoriesChanges(
-                printer.config.product_categories_ids,
-                orderChange
-            );
-            if (changes["new"].length > 0 || changes["cancelled"].length > 0) {
-                const printingChanges = {
-                    new: changes["new"],
-                    cancelled: changes["cancelled"],
-                    table_name: this.pos.config.module_pos_restaurant
-                        ? this.getTable().name
-                        : false,
-                    floor_name: this.pos.config.module_pos_restaurant
-                        ? this.getTable().floor.name
-                        : false,
-                    name: this.name || "unknown order",
-                    time: {
-                        hours,
-                        minutes,
-                        date,
-                    },
-                    trackingNumber: this.trackingNumber,
-                };
-                const receipt = renderToElement("point_of_sale.OrderChangeReceipt", {
-                    changes: printingChanges,
-                });
-                const result = await printer.printReceipt(receipt);
-                if (!result.successful) {
-                    isPrintSuccessful = false;
-                }
-            }
-        }
-        return isPrintSuccessful;
-    }
-
 });
