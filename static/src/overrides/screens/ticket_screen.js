@@ -43,7 +43,7 @@ patch(TicketScreen.prototype, {
             const foundPaymentId = await this.orm.search("pos.payment", [
                 ["numero_autorizacion", "=", payment_line.numero_autorizacion],
             ]);
-            var terminal = (payment_line.name == "Credomátic Puntos") ? order.pos.config.terminal_puntos_id : order.pos.config.terminal_id;
+            var terminal = (payment_line.payment_method.pago_puntos == true) ? order.pos.config.terminal_puntos_id : order.pos.config.terminal_id;
             var service = new ServiceProvider();
             console.info(payment_line)
 
