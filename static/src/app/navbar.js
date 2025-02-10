@@ -59,7 +59,7 @@ patch(Navbar.prototype, {
             });
             return;
         }else{
-            var domain = ['|', ['lote', '=', undefined], ['lote', '=', ''], ["payment_method_id.use_payment_terminal", "=", "credomatic"],]
+            var domain = ['|', ['lote', '=', undefined], ['lote', '=', ''], ["payment_method_id.use_payment_terminal", "=", "credomatic"], ['pos_order_id.config_id.id','=',"this.pos.config.id"]]
             if (name == 'Credomátic Automático'){
                 domain.push(["payment_method_id.pago_puntos", "=", false])
             }else{
