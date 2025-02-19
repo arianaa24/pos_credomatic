@@ -59,7 +59,7 @@ patch(Navbar.prototype, {
             });
             return;
         }else{
-            var domain = ['|', ['lote', '=', undefined], ['lote', '=', ''], ["payment_method_id.use_payment_terminal", "=", "credomatic"], ['pos_order_id.config_id.id','=',"this.pos.config.id"]]
+            var domain = ['|', ['lote', '=', undefined], ['lote', '=', ''], ["payment_method_id.use_payment_terminal", "=", "credomatic"], ['pos_order_id.config_id.id','=',this.pos.config.id]]
             if (name == 'Credomátic Automático'){
                 domain.push(["payment_method_id.pago_puntos", "=", false])
             }else{
@@ -109,7 +109,7 @@ patch(Navbar.prototype, {
         return this.reporteCaja(name, terminal)
     },
     async reporteCaja(name, terminal) {
-        var domain = (name == 'Credomátic Automático') ? [["payment_method_id.use_payment_terminal", "=", "credomatic"], ["payment_method_id.pago_puntos", "=", false], ['pos_order_id.config_id.id','=',"this.pos.config.id"]]: [["payment_method_id.use_payment_terminal", "=", "credomatic"], ["payment_method_id.pago_puntos", "=", true], ['pos_order_id.config_id.id','=',"this.pos.config.id"]];
+        var domain = (name == 'Credomátic Automático') ? [["payment_method_id.use_payment_terminal", "=", "credomatic"], ["payment_method_id.pago_puntos", "=", false], ['pos_order_id.config_id.id','=',this.pos.config.id]]: [["payment_method_id.use_payment_terminal", "=", "credomatic"], ["payment_method_id.pago_puntos", "=", true], ['pos_order_id.config_id.id','=',this.pos.config.id]];
         var paymentFields = ["lote", "pos_order_id", "transaction_id", "reference_number", "numero_autorizacion", "amount", "payment_date", "numero_autorizacion_anulacion"];
         let paymentlines = await this.pos.orm.searchRead(
             "pos.payment",
