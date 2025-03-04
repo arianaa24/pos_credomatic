@@ -66,6 +66,7 @@ patch(Navbar.prototype, {
                 domain.push(["payment_method_id.pago_puntos", "=", true])
             }
             const paymentIds = await this.pos.orm.search('pos.payment', domain);
+            console.log(paymentIds)
             for (var payment_id of paymentIds){
                 await this.pos.orm.write('pos.payment', [payment_id], { lote: response['authorizationNumber'] });
             }
@@ -116,6 +117,7 @@ patch(Navbar.prototype, {
             domain,
             paymentFields
         );
+        console.log(paymentlines)
         var listaLotesSinDuplicados = [...new Set(paymentlines.filter((item) => (item.lote)).map(item => item.lote))];
         const LotesList = listaLotesSinDuplicados
             .map((lote) => {
