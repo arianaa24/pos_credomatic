@@ -59,13 +59,21 @@ patch(Navbar.prototype, {
             });
             return;
         }else{
-            var domain = ['|', ['lote', '=', undefined], ['lote', '=', ''], ["payment_method_id.use_payment_terminal", "=", "credomatic"], ['pos_order_id.config_id.id','=',this.pos.config.id]]
+            var today = new Date();
+            var isoDate = today.toISOString().slice(0, 10);
+            var domain = ['|', ['lote', '=', undefined], ['lote', '=', ''], 
+                            ["payment_method_id.use_payment_terminal", "=", "credomatic"], 
+                            ['pos_order_id.config_id.id','=',this.pos.config.id],
+                            '|', ['numero_autorizacion_anulacion', '=', undefined], ['numero_autorizacion_anulacion', '=', ''],
+                            ['payment_date', '>=', `${isoDate} 00:00:00`], ['payment_date', '<=', `${isoDate} 23:59:59`]
+                        ]
             if (name == 'Credomátic Automático'){
                 domain.push(["payment_method_id.pago_puntos", "=", false])
             }else{
                 domain.push(["payment_method_id.pago_puntos", "=", true])
             }
             const paymentIds = await this.pos.orm.search('pos.payment', domain);
+            console.log(paymentIds)
             for (var payment_id of paymentIds){
                 await this.pos.orm.write('pos.payment', [payment_id], { lote: response['authorizationNumber'] });
             }
@@ -186,6 +194,7 @@ patch(Navbar.prototype, {
         }
         var voucher_reporte = "- - - - - -- cierre - - - - - - -\n           "+response['TerminalDisplayLine1Voucher']+"\n      "+response['TerminalDisplayLine2Voucher']+"\n            "+response['TerminalDisplayLine3Voucher']+"\n					 \nUsuario:             "+this.pos.user.name+"\nLote:                      "+lote+"\nTerminald ID:              "+terminal+"\nFECHA:"+response['hostDate'].substring(2, 4)+"/"+response['hostDate'].substring(0, 2)+"/"+response['hostDate'].substring(4, 8)+"              "+response['hostTime'].substring(0,2)+":"+response['hostTime'].substring(2, 4)+"\n\n        ***  TOTALES  ***           \nVENTAS:       "+parseInt(response['salesTransactions'])+"     "+response['currencyVoucher']+"."+parseFloat(response['salesAmount']).toLocaleString("es-GT", { minimumFractionDigits: 2, maximumFractionDigits: 2 })+"\nANULACIONES:  "+parseInt(response['refundsTransactions'])+"      "+response['currencyVoucher']+". -"+parseFloat(response['refundsAmount']).toLocaleString("es-GT", { minimumFractionDigits: 2, maximumFractionDigits: 2 })+"\n\n        ***  FORMATO  ***           \nFACT      REF      AUT      TOTAL\nFECHA  HORA\n\n        ***  DETALLE  ***\n"+lineas_detalle+"\n      ****** COMPLETO ******\n"
 
+        console.log(voucher_reporte)
         await this.printer.print(
             CierreCajaReceipt,
             {
