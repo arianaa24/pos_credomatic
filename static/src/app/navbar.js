@@ -124,6 +124,7 @@ patch(Navbar.prototype, {
             domain,
             paymentFields
         );
+        console.log(paymentlines)
         var listaLotesSinDuplicados = [...new Set(paymentlines.filter((item) => (item.lote)).map(item => item.lote))];
         const LotesList = listaLotesSinDuplicados
             .map((lote) => {
