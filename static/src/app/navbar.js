@@ -190,12 +190,14 @@ patch(Navbar.prototype, {
         var lineas_filtradas = [];
         var lineas_detalle = "";
         lineas_filtradas = (lote == "Sin Lote") ? paymentlines.filter((line) => (!line.lote)) : paymentlines.filter((line) => (line.lote == lote));
+        console.log(lineas_filtradas)
         for (var line of lineas_filtradas){
+            console.log(line)
             lineas_detalle += line.pos_order_id[1].split("/")[1]+"  "+(line.reference_number || '--')+"  "+(line.numero_autorizacion || '--')+"  "+line.amount.toString()+" \n"+line.payment_date+"\n";
         }
         var voucher_reporte = "- - - - - -- cierre - - - - - - -\n           "+response['TerminalDisplayLine1Voucher']+"\n      "+response['TerminalDisplayLine2Voucher']+"\n            "+response['TerminalDisplayLine3Voucher']+"\n					 \nUsuario:             "+this.pos.user.name+"\nLote:                      "+lote+"\nTerminald ID:              "+terminal+"\nFECHA:"+response['hostDate'].substring(2, 4)+"/"+response['hostDate'].substring(0, 2)+"/"+response['hostDate'].substring(4, 8)+"              "+response['hostTime'].substring(0,2)+":"+response['hostTime'].substring(2, 4)+"\n\n        ***  TOTALES  ***           \nVENTAS:       "+parseInt(response['salesTransactions'])+"     "+response['currencyVoucher']+"."+parseFloat(response['salesAmount']).toLocaleString("es-GT", { minimumFractionDigits: 2, maximumFractionDigits: 2 })+"\nANULACIONES:  "+parseInt(response['refundsTransactions'])+"      "+response['currencyVoucher']+". -"+parseFloat(response['refundsAmount']).toLocaleString("es-GT", { minimumFractionDigits: 2, maximumFractionDigits: 2 })+"\n\n        ***  FORMATO  ***           \nFACT      REF      AUT      TOTAL\nFECHA  HORA\n\n        ***  DETALLE  ***\n"+lineas_detalle+"\n      ****** COMPLETO ******\n"
 
-        console.log(voucher_reporte)
+        console.log(voucher_reporte) 
         await this.printer.print(
             CierreCajaReceipt,
             {
