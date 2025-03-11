@@ -41,7 +41,6 @@ export class PaymentCredomatic extends PaymentInterface {
     payment_request(payment_data, line, terminal) {
         var service = new ServiceProvider();
         var response = service.SdkInvoke(payment_data); 
-        response = '{"acqNumber":"","authorizationNumber":"041559","cardBrand":"retail EMV","hostDate":"09232024","hostTime":"171346","invoice":"undefined","maskedCardNumber":"448796XXXXXX0125","referenceNumber":"17015859","responseCode":"00","responseCodeDescription":"APROBADA","salesAmount":"000000000253","systemTraceNumber":"067836","transactionId":"06783517015859050158","currencyVoucher":"GTQ","TerminalDisplayLine1Voucher":"TEST ISC480","TerminalDisplayLine2Voucher":"PRUEBAS INTEGRACUONED BAC","TerminalDisplayLine3Voucher":"ZONA 12","trnTotalTime":"37429"}1234';
 
         try {
             var string_to_parse = response.replace(/(\r\n|\r|\n)/g, '\\r\\n');
