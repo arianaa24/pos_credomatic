@@ -27,6 +27,7 @@ patch(Navbar.prototype, {
         var service = new ServiceProvider();
         var data = "terminalId:"+terminal+";transactionType:BATCH_SETTLEMENT";
         var response = service.SdkInvoke(data);
+
         try {
             var string_to_parse = response.replace(/(\r\n|\r|\n)/g, '\\r\\n');
             string_to_parse = string_to_parse.substring(0, string_to_parse.length - 4);
@@ -59,44 +60,12 @@ patch(Navbar.prototype, {
             });
             return;
         }else{
-            var today = new Date();
-            var isoDate = today.toISOString().slice(0, 10);
-            var domain = ['|', ['lote', '=', undefined], ['lote', '=', ''], 
-                            ["payment_method_id.use_payment_terminal", "=", "credomatic"], 
-                            ['pos_order_id.config_id.id','=',this.pos.config.id],
-                            '|', ['numero_autorizacion_anulacion', '=', undefined], ['numero_autorizacion_anulacion', '=', ''],
-                            ['payment_date', '>=', `${isoDate} 00:00:00`], ['payment_date', '<=', `${isoDate} 23:59:59`]
-                        ]
-            if (name == 'Credomátic Automático'){
-                domain.push(["payment_method_id.pago_puntos", "=", false])
-            }else{
-                domain.push(["payment_method_id.pago_puntos", "=", true])
+            try {
+                const result = await this.pos.orm.call("pos.payment", "asignar_lote_cierre", [[], name, this.pos.config, response, this.pos.pos_session.id, terminal]);
+                console.info("Resultado de Python:", result);
+            } catch (error) {
+                console.error("Error al llamar al metodo:", error);
             }
-            const paymentIds = await this.pos.orm.search('pos.payment', domain);
-            console.log(paymentIds)
-            for (var payment_id of paymentIds){
-                await this.pos.orm.write('pos.payment', [payment_id], { lote: response['authorizationNumber'] });
-            }
-            var values = {
-                lineas_cierre_ids: [
-                    [0, 0, { 
-                        lote: response['authorizationNumber'],
-                        tipo: name, 
-                        session_id: this.pos.pos_session.id, 
-                        hostDate: response['hostDate'],
-                        hostTime: response['hostTime'],
-                        refundsAmount: (terminal == this.pos.config.terminal_id) ? (parseFloat(response['refundsAmount']) / 100).toFixed(2): (parseFloat(response['refundsAmount']/this.pos.config.equivalencia_puntos)),
-                        refundsTransactions: parseInt(response['refundsTransactions']),
-                        salesAmount: (terminal == this.pos.config.terminal_id) ? (parseFloat(response['salesAmount']) / 100).toFixed(2): (parseFloat(response['salesAmount']/this.pos.config.equivalencia_puntos)),
-                        salesTransactions: parseInt(response['salesTransactions']),
-                        TerminalDisplayLine1Voucher: response['TerminalDisplayLine1Voucher'],
-                        TerminalDisplayLine2Voucher: response['TerminalDisplayLine2Voucher'],
-                        TerminalDisplayLine3Voucher: response['TerminalDisplayLine3Voucher'], 
-                    }] 
-                ],
-            };
-            await this.pos.orm.write('pos.session', [this.pos.pos_session.id], values);
-
             await this.popup.add(ErrorPopup, {
                 title: _t("Cierre realizado"),
                 body: _t("Cierre realizado, %s actualizado.", response['authorizationNumber']),
@@ -104,7 +73,6 @@ patch(Navbar.prototype, {
             return true;
         }
     },
-
     
     reporteAutomatico() {
         var name = 'Credomátic Automático';   
@@ -117,14 +85,7 @@ patch(Navbar.prototype, {
         return this.reporteCaja(name, terminal)
     },
     async reporteCaja(name, terminal) {
-        var domain = (name == 'Credomátic Automático') ? [["payment_method_id.use_payment_terminal", "=", "credomatic"], ["payment_method_id.pago_puntos", "=", false], ['pos_order_id.config_id.id','=',this.pos.config.id]]: [["payment_method_id.use_payment_terminal", "=", "credomatic"], ["payment_method_id.pago_puntos", "=", true], ['pos_order_id.config_id.id','=',this.pos.config.id]];
-        var paymentFields = ["lote", "pos_order_id", "transaction_id", "reference_number", "numero_autorizacion", "amount", "payment_date", "numero_autorizacion_anulacion"];
-        let paymentlines = await this.pos.orm.searchRead(
-            "pos.payment",
-            domain,
-            paymentFields
-        );
-        console.log(paymentlines)
+        const paymentlines = await this.pos.orm.call("pos.payment", "get_paymentlines", [[], name, this.pos.config]);
         var listaLotesSinDuplicados = [...new Set(paymentlines.filter((item) => (item.lote)).map(item => item.lote))];
         const LotesList = listaLotesSinDuplicados
             .map((lote) => {
@@ -186,14 +147,17 @@ patch(Navbar.prototype, {
 
         }
     },
+    adjustTimeZone(payment_date, offset){
+        const date = new Date(payment_date.replace(" ", "T") + "Z");
+        date.setHours(date.getHours() + offset);
+        return date.toISOString().replace("T", " ").slice(0, 19); 
+    },
     async impresion_reporte(response, terminal, lote, paymentlines){
         var lineas_filtradas = [];
         var lineas_detalle = "";
         lineas_filtradas = (lote == "Sin Lote") ? paymentlines.filter((line) => (!line.lote)) : paymentlines.filter((line) => (line.lote == lote));
-        console.log(lineas_filtradas)
         for (var line of lineas_filtradas){
-            console.log(line)
-            lineas_detalle += line.pos_order_id[1].split("/")[1]+"  "+(line.reference_number || '--')+"  "+(line.numero_autorizacion || '--')+"  "+line.amount.toString()+" \n"+line.payment_date+"\n";
+            lineas_detalle += line.pos_order_id[1].split("/")[1]+"  "+(line.reference_number || '--')+"  "+(line.numero_autorizacion || '--')+"  "+line.amount.toString()+" \n"+this.adjustTimeZone(line.payment_date, -6)+"\n";
         }
         var voucher_reporte = "- - - - - -- cierre - - - - - - -\n           "+response['TerminalDisplayLine1Voucher']+"\n      "+response['TerminalDisplayLine2Voucher']+"\n            "+response['TerminalDisplayLine3Voucher']+"\n					 \nUsuario:             "+this.pos.user.name+"\nLote:                      "+lote+"\nTerminald ID:              "+terminal+"\nFECHA:"+response['hostDate'].substring(2, 4)+"/"+response['hostDate'].substring(0, 2)+"/"+response['hostDate'].substring(4, 8)+"              "+response['hostTime'].substring(0,2)+":"+response['hostTime'].substring(2, 4)+"\n\n        ***  TOTALES  ***           \nVENTAS:       "+parseInt(response['salesTransactions'])+"     "+response['currencyVoucher']+"."+parseFloat(response['salesAmount']).toLocaleString("es-GT", { minimumFractionDigits: 2, maximumFractionDigits: 2 })+"\nANULACIONES:  "+parseInt(response['refundsTransactions'])+"      "+response['currencyVoucher']+". -"+parseFloat(response['refundsAmount']).toLocaleString("es-GT", { minimumFractionDigits: 2, maximumFractionDigits: 2 })+"\n\n        ***  FORMATO  ***           \nFACT      REF      AUT      TOTAL\nFECHA  HORA\n\n        ***  DETALLE  ***\n"+lineas_detalle+"\n      ****** COMPLETO ******\n"
 
