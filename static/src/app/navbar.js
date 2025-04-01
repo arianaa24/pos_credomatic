@@ -6,6 +6,7 @@ import { ErrorPopup } from "@point_of_sale/app/errors/popups/error_popup";
 import { useService } from "@web/core/utils/hooks";
 import { SelectionPopup } from "@point_of_sale/app/utils/input_popups/selection_popup";
 import { CierreCajaReceipt } from "@pos_credomatic/app/cierre_caja_receipt";
+import { localization } from "@web/core/l10n/localization";
 
 patch(Navbar.prototype, {
     setup() {
@@ -147,17 +148,12 @@ patch(Navbar.prototype, {
 
         }
     },
-    adjustTimeZone(payment_date, offset){
-        const date = new Date(payment_date.replace(" ", "T") + "Z");
-        date.setHours(date.getHours() + offset);
-        return date.toISOString().replace("T", " ").slice(0, 19); 
-    },
     async impresion_reporte(response, terminal, lote, paymentlines){
         var lineas_filtradas = [];
         var lineas_detalle = "";
         lineas_filtradas = (lote == "Sin Lote") ? paymentlines.filter((line) => (!line.lote)) : paymentlines.filter((line) => (line.lote == lote));
         for (var line of lineas_filtradas){
-            lineas_detalle += line.pos_order_id[1].split("/")[1]+"  "+(line.reference_number || '--')+"  "+(line.numero_autorizacion || '--')+"  "+line.amount.toString()+" \n"+this.adjustTimeZone(line.payment_date, -6)+"\n";
+            lineas_detalle += line.pos_order_id[1].split("/")[1]+"  "+(line.reference_number || '--')+"  "+(line.numero_autorizacion || '--')+"  "+line.amount.toString()+" \n"+luxon.DateTime.fromFormat(line.payment_date, "yyyy-MM-dd HH:mm:ss", { zone: "UTC" }).setZone("America/Guatemala").toFormat(localization.dateTimeFormat)+"\n";
         }
         var voucher_reporte = "- - - - - -- cierre - - - - - - -\n           "+response['TerminalDisplayLine1Voucher']+"\n      "+response['TerminalDisplayLine2Voucher']+"\n            "+response['TerminalDisplayLine3Voucher']+"\n					 \nUsuario:             "+this.pos.user.name+"\nLote:                      "+lote+"\nTerminald ID:              "+terminal+"\nFECHA:"+response['hostDate'].substring(2, 4)+"/"+response['hostDate'].substring(0, 2)+"/"+response['hostDate'].substring(4, 8)+"              "+response['hostTime'].substring(0,2)+":"+response['hostTime'].substring(2, 4)+"\n\n        ***  TOTALES  ***           \nVENTAS:       "+parseInt(response['salesTransactions'])+"     "+response['currencyVoucher']+"."+parseFloat(response['salesAmount']).toLocaleString("es-GT", { minimumFractionDigits: 2, maximumFractionDigits: 2 })+"\nANULACIONES:  "+parseInt(response['refundsTransactions'])+"      "+response['currencyVoucher']+". -"+parseFloat(response['refundsAmount']).toLocaleString("es-GT", { minimumFractionDigits: 2, maximumFractionDigits: 2 })+"\n\n        ***  FORMATO  ***           \nFACT      REF      AUT      TOTAL\nFECHA  HORA\n\n        ***  DETALLE  ***\n"+lineas_detalle+"\n      ****** COMPLETO ******\n"
 
