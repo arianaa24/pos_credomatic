@@ -1,7 +1,7 @@
 # -*- encoding: utf-8 -*-
 {
     'name': 'POS Credomátic',
-    'version': '1.1',
+    'version': '1.2',
     'category': 'Custom',
     'description': """ POS Credomátic """,
     'author': 'aquíH',
