@@ -52,9 +52,9 @@ class PosPayment(models.Model):
                         else (float(response["salesAmount"]) / config_id['equivalencia_puntos'])
                     ),
                     "salesTransactions": int(response["salesTransactions"]),
-                    "TerminalDisplayLine1Voucher": response["TerminalDisplayLine1Voucher"],
-                    "TerminalDisplayLine2Voucher": response["TerminalDisplayLine2Voucher"],
-                    "TerminalDisplayLine3Voucher": response["TerminalDisplayLine3Voucher"],
+                    "TerminalDisplayLine1Voucher": response.get("TerminalDisplayLine1Voucher", "") or "",
+                    "TerminalDisplayLine2Voucher": response.get("TerminalDisplayLine2Voucher", "") or "",
+                    "TerminalDisplayLine3Voucher": response.get("TerminalDisplayLine3Voucher", "") or "",
                 })
             ]
         }
